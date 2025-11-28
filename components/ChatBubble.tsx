@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Bot, Play, Volume2, BookOpen, Plus, Languages } from 'lucide-react';
 import { ChatMessage, VocabItem } from '../types';
+import { PronunciationButton } from './PronunciationButton';
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -11,25 +12,12 @@ interface ChatBubbleProps {
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSaveWord, savedWordMap }) => {
   const isUser = message.role === 'user';
 
-  // Helper to play base64 audio
-  const playAudio = (base64: string) => {
-    const audio = new Audio(`data:audio/webm;base64,${base64}`);
+  // Helper to play base64 audio (user uploaded/recorded)
+  const playAudio = (base64: string, mimeType?: string) => {
+    // Default to webm if no mimeType provided (backward compatibility)
+    const type = mimeType || 'audio/webm';
+    const audio = new Audio(`data:${type};base64,${base64}`);
     audio.play().catch(e => console.error("Audio playback error:", e));
-  };
-
-  // Helper for Pronunciation
-  const handlePronunciation = (text: string) => {
-    if (!window.speechSynthesis) return;
-    
-    // Attempt to extract Arabic text if format is "Arabic (Latin)"
-    // Matches characters until the first open parenthesis
-    const arabicMatch = text.match(/^(.*?)\s*\(/); 
-    const textToSpeak = arabicMatch ? arabicMatch[1] : text;
-
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'ar'; // Arabic
-    utterance.rate = 0.9; // Slightly slower for clarity
-    window.speechSynthesis.speak(utterance);
   };
 
   return (
@@ -57,7 +45,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSaveWord, sav
                 ) : (
                   <div className="flex items-center gap-2">
                     <button 
-                      onClick={() => playAudio(message.content)}
+                      onClick={() => playAudio(message.content, (message as any).mimeType)} // Cast for now as mimeType is optional in some contexts
                       className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors"
                     >
                       <Play size={16} fill="currentColor" />
@@ -77,17 +65,14 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSaveWord, sav
                   <h4 className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-1">Transcription</h4>
                   <div className="flex justify-between items-start gap-2">
                     <p className="text-lg font-medium text-secondary" dir="auto">{message.response.transcription}</p>
-                    <button 
-                      onClick={() => handlePronunciation(message.response!.transcription)}
+                    <PronunciationButton 
+                      text={message.response.transcription} 
                       className="p-1.5 text-gray-400 hover:text-secondary hover:bg-secondary/10 rounded-full transition-colors"
-                      title="Listen"
-                    >
-                      <Volume2 size={16} />
-                    </button>
+                    />
                   </div>
                 </div>
 
-                {/* Translation Section (New) */}
+                {/* Translation Section */}
                 {message.response.translation && (
                   <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
                     <div className="flex items-center gap-1 mb-1">
@@ -119,13 +104,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSaveWord, sav
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{item.word}</p>
-                                <button 
-                                  onClick={() => handlePronunciation(item.word)}
-                                  className="text-gray-400 hover:text-primary transition-colors"
-                                  title="Pronounce"
-                                >
-                                  <Volume2 size={14} />
-                                </button>
                               </div>
                               <p className="text-xs text-gray-600 dark:text-gray-400">{item.meaning}</p>
                               {item.notes && <p className="text-[10px] text-gray-400 dark:text-gray-500 italic mt-0.5">{item.notes}</p>}

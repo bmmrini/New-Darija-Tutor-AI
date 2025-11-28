@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Type, Schema, Modality } from "@google/genai";
 import { TutorResponse, AudioInput } from "../types";
 
 // Schema for the AI Tutor response
@@ -98,6 +98,47 @@ export const generateTutorResponse = async (
     return parsedResponse;
   } catch (error) {
     console.error("Gemini API Error:", error);
+    throw error;
+  }
+};
+
+export const generateSpeech = async (text: string): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+  
+  if (!text || !text.trim()) {
+    throw new Error("Text is required for speech generation.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [
+        {
+          parts: [{ text: text }],
+        }
+      ],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: "Kore" },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+      console.warn("Gemini TTS response missing audio data.");
+      throw new Error("No audio generated from Gemini.");
+    }
+    return base64Audio;
+  } catch (error) {
+    console.error("Gemini TTS Error:", error);
     throw error;
   }
 };

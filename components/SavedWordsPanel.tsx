@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookMarked, X, Trash2, Volume2 } from 'lucide-react';
+import { BookMarked, X, Trash2 } from 'lucide-react';
 import { VocabItem } from '../types';
 
 interface SavedWordsPanelProps {
@@ -15,17 +15,6 @@ export const SavedWordsPanel: React.FC<SavedWordsPanelProps> = ({
   savedWords,
   onRemoveWord,
 }) => {
-  // Helper for Pronunciation
-  const handlePronunciation = (text: string) => {
-    if (!window.speechSynthesis) return;
-    const arabicMatch = text.match(/^(.*?)\s*\(/); 
-    const textToSpeak = arabicMatch ? arabicMatch[1] : text;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'ar'; 
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
-  };
-
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-black/20 z-20 md:hidden backdrop-blur-sm" onClick={onClose} />}
@@ -55,13 +44,6 @@ export const SavedWordsPanel: React.FC<SavedWordsPanelProps> = ({
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
                        <h3 className="font-bold text-gray-800 dark:text-gray-100">{item.word}</h3>
-                       <button 
-                          onClick={() => handlePronunciation(item.word)}
-                          className="text-gray-400 hover:text-primary transition-colors"
-                          title="Pronounce"
-                        >
-                          <Volume2 size={14} />
-                        </button>
                     </div>
                     <button 
                       onClick={() => onRemoveWord(item.word)}
