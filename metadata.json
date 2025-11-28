@@ -1,0 +1,7 @@
+{
+  "name": "Darija Tutor AI",
+  "description": "A modern, AI-powered language learning application for practicing Moroccan Arabic (Darija) with real-time text and audio analysis.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
